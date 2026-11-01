@@ -1,0 +1,63 @@
+name: Publicar RAW-SNES OBS Companion v1.0.0
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/publicar-v1.0.0.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Obter código
+        uses: actions/checkout@v4
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Executar testes
+        run: |
+          python -m py_compile rawsnes_obs.py
+          python -m unittest discover -s tests -v
+      - name: Empacotar distribuição completa
+        shell: bash
+        run: |
+          python - <<'PY'
+          import zipfile
+          from pathlib import Path
+          files = [
+              ".gitignore", "AUDIO-LICENSE.txt", "CHANGELOG.md",
+              "CONTRIBUTING.md", "INICIAR.bat", "LICENSE", "README.md",
+              "README.en.md", "RELEASE_NOTES.md", "rawsnes_obs.py",
+              "som_alerta.wav", "tests/test_rawsnes_obs.py",
+              "docs/ARQUITETURA.md", "docs/PUBLICACAO.md", "docs/SEGURANCA.md",
+              ".github/workflows/tests.yml",
+          ]
+          target = Path("RAW-SNES-OBS-Companion_v1.0.0.zip")
+          with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as out:
+              for item in files:
+                  p = Path(item)
+                  if not p.is_file():
+                      raise RuntimeError(f"Arquivo obrigatório ausente: {item}")
+                  out.write(p, p.as_posix())
+          print(f"Pacote pronto: {target.name}, {target.stat().st_size} bytes")
+          PY
+      - name: Criar release estável v1.0.0
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view v1.0.0 > /dev/null 2>&1; then
+            echo "A release v1.0.0 já existe; nada foi substituído."
+            exit 0
+          fi
+          gh release create v1.0.0 RAW-SNES-OBS-Companion_v1.0.0.zip \
+            --target "$GITHUB_SHA" \
+            --title "RAW-SNES OBS Companion v1.0.0" \
+            --notes-file RELEASE_NOTES.md \
+            --latest
