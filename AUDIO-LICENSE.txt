@@ -1,0 +1,9 @@
+BUNDLED DEMONSTRATION TONE
+
+File: som_alerta.wav
+Content: original, synthesized, short three-tone notification sound.
+License: CC0 1.0 Universal (public domain dedication).
+https://creativecommons.org/publicdomain/zero/1.0/
+
+This is NOT a recording or extraction of the original RAW-SNES alert sound.
+No RAW-SNES binaries, code, images, firmware or private recordings are included.
